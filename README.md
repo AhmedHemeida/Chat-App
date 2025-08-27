@@ -30,10 +30,10 @@
 
 ## Running the App
 
-1- Install dependencies:
+1- Install dependencies :
 - npm install
 
-2- Setup .env:
+2- Setup .env :
 - MONGO_URI=your_mongodb_uri
 - JWT_SECRET=your_jwt_secret
 - PORT=3000
@@ -44,5 +44,5 @@
 4- Start frontend (Next.js) app :
 - npm run dev
 
-5- Open in browser:
-http://localhost:3000     
+5- Open in browser :
+http://localhost:3001     

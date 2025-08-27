@@ -16,7 +16,7 @@
 
 ## Database Structure
 - **User**: { username, email, password, avatar }
-- **Message**: { sender, receiver, text, image (optional), conversationId }
+- **Message**: { sender, receiver, text, image (optional), conversationId , timestamps }
 - **Conversation**: { participants: [User IDs] , lastMessage }
 
 ## Technical Approach

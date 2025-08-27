@@ -14,7 +14,6 @@ const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 
-// ===== Middlewares =====
 app.use(cors({
   origin: "http://localhost:3001",
   credentials: true
@@ -23,7 +22,6 @@ app.use(express.json());
 app.use(cookieParser());
 app.use('/uploads', express.static(path.join(__dirname, process.env.UPLOAD_DIR || 'uploads')));
 
-// ===== Socket.io setup =====
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -33,18 +31,16 @@ const io = new Server(server, {
   }
 });
 
-// اضف io للـ req عشان يكون متاح في أي route
 app.use((req, res, next) => {
   req.io = io;
   next();
 });
 
-// socket connection
 io.on("connection", (socket) => {
   console.log("✅ New client connected");
 
   socket.on("setup", (userId) => {
-    socket.join(userId); // انضمام المستخدم لغرفته الخاصة
+    socket.join(userId); 
     socket.emit("connected");
   });
 
@@ -53,15 +49,11 @@ io.on("connection", (socket) => {
   });
 });
 
-// ===== Routes =====
 app.use('/api/auth', authRoutes);
 app.use('/api', convRoutes);
 app.use('/api/messages', msgRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => res.json({ ok: true }));
 
-// ===== Start server =====
 const PORT = process.env.PORT || 3000;
 (async () => {
   try {

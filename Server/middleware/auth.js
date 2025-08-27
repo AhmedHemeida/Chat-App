@@ -6,12 +6,10 @@ const auth = async (req, res, next) => {
   try {
     let token = null;
 
-    // شوف لو فيه Cookie اسمها token
     if (req.cookies && req.cookies.token) {
       token = req.cookies.token;
     }
 
-    // fallback: Authorization Header
     const authHeader = req.headers.authorization;
     if (!token && authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.split(' ')[1];

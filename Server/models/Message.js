@@ -11,7 +11,7 @@ const messageSchema = new mongoose.Schema({
     ref: 'User', 
     required: true 
   },
-  receiver: {   // 👈 أضفناها
+  receiver: {   
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
@@ -26,7 +26,6 @@ const messageSchema = new mongoose.Schema({
     default: '' 
   },
   attachments: [{ type: String }],
-  readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
 messageSchema.index({ conversation: 1, createdAt: 1 });

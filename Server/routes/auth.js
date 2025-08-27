@@ -8,7 +8,6 @@ const router = express.Router();
 
 const signToken = (user) => jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 
-// Register
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -28,8 +27,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login
-// routes/auth.js
+// 
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -41,7 +39,6 @@ router.post('/login', async (req, res) => {
 
     const token = signToken(user);
 
-    // حفظ التوكن في cookie (httpOnly)
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // https فقط في production

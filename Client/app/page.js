@@ -9,7 +9,6 @@ export default function Home() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // هنا تقدر تجيب الـ user من localStorage (بعد تسجيل الدخول)
     const savedUser = JSON.parse(localStorage.getItem("user"));
     setUser(savedUser);
 

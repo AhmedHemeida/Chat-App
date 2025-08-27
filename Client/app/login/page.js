@@ -1,16 +1,19 @@
 "use client";
+
 import { useState } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
-  async function handleLogin(e) {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+
+    if (!email || !password) {
+      setError("Please enter email and password");
+      return;
+    }
 
     try {
       const res = await fetch("http://localhost:3000/api/auth/login", {
@@ -18,69 +21,69 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // 🟢 عشان الكوكي يتخزن
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to login");
-      }
+      if (!res.ok) throw new Error(data.message || "Login failed");
 
-      console.log("✅ Logged in:", data);
-      window.location.href = "/chat"; // redirect للـ chat
+      localStorage.setItem("name", data.user.name);
+
+      window.location.href = "/chat";
     } catch (err) {
       setError(err.message);
-      console.error("❌ Login Error:", err);
-    } finally {
-      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white w-96 p-6 rounded-2xl shadow space-y-4"
-      >
-        <h1 className="text-2xl font-bold text-center">Login</h1>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black">
+      <div className="bg-black p-10 rounded shadow-md w-full max-w-lg border border-gray-700">
+        <div className="mb-6 border-b border-gray-600 pb-2">
+          <h2 className="text-3xl font-bold text-white text-center">
+            Chat App
+          </h2>
+        </div>
+
+        <h1 className="text-xl font-semibold mb-6 text-white text-center">
+          Sign in
+        </h1>
 
         <input
           type="email"
           placeholder="Email"
-          className="border p-2 w-full rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-4 px-4 py-3 rounded bg-white text-black"
           required
         />
 
         <input
           type="password"
           placeholder="Password"
-          className="border p-2 w-full rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="w-full mb-4 px-4 py-3 rounded bg-white text-black"
           required
         />
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
         <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 disabled:opacity-50"
+          onClick={handleLogin}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded"
         >
-          {loading ? "Logging in..." : "Login"}
+          Login
         </button>
 
-        <p className="text-sm text-center">
+        <p className="text-sm text-center text-gray-400 mt-4">
           Don’t have an account?{" "}
-          <a href="/register" className="text-blue-500 underline">
+          <a href="/register" className="text-blue-400 hover:underline">
             Register
           </a>
         </p>
-      </form>
+      </div>
     </div>
   );
 }

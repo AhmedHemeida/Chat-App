@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { io } from "socket.io-client";
@@ -7,32 +8,39 @@ export default function ChatWindow({ conversation, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [newMsg, setNewMsg] = useState("");
   const [file, setFile] = useState(null);
+  const [activeUser, setActiveUser] = useState(null);
+
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
 
-  // initialize socket once
   useEffect(() => {
     if (!socketRef.current) {
       socketRef.current = io("http://localhost:3000", {
         transports: ["websocket"],
       });
 
-      socketRef.current.on("connect", () => {
-        console.log("✅ Socket connected");
-      });
+      socketRef.current.on("connect", () => {});
 
       socketRef.current.on("new-msg", (msg) => {
-        setMessages(prev => {
-          if (prev.some(m => m._id === msg._id)) return prev;
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === msg._id)) return prev;
           return [...prev, msg];
         });
       });
     }
   }, []);
 
-  // Load messages when conversation changes
   useEffect(() => {
-    if (!conversation) return;
+    if (conversation?.otherUser) {
+      setActiveUser(conversation.otherUser);
+    }
+  }, [conversation]);
+
+  useEffect(() => {
+    if (!conversation?.conversationId) {
+      setMessages([]);
+      return;
+    }
 
     const fetchMessages = async () => {
       try {
@@ -45,18 +53,18 @@ export default function ChatWindow({ conversation, currentUser }) {
         setMessages(data);
       } catch (err) {
         console.error(err);
+        setMessages([]);
       }
     };
 
     fetchMessages();
   }, [conversation]);
 
-  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  if (!conversation) {
+  if (!activeUser) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-400">
         Select a conversation
@@ -86,58 +94,63 @@ export default function ChatWindow({ conversation, currentUser }) {
       });
       setNewMsg("");
       setFile(null);
-      // ما تضيفش الرسالة هنا، سيب الـ socket يعملها
     } catch (err) {
       console.error(err);
     }
   };
 
   return (
-    <div className="flex flex-col flex-1 h-screen bg-white shadow-sm">
-      {/* Header */}
-      <div className="p-4 border-b flex items-center gap-3 bg-gray-100">
+    <div className="flex flex-col flex-1 h-full overflow-hidden bg-white shadow-sm">
+      <div className="p-4 border-b flex items-center gap-3 mt-12 mr-4 rounded-lg shadow-sm">
         <Image
-          src={conversation.otherUser?.avatarUrl || "/default-avatar.png"}
-          alt={conversation.otherUser?.name || "User"}
-          width={40}
-          height={40}
-          className="rounded-full"
+          src={activeUser.avatarUrl || "/default-avatar.png"}
+          alt={activeUser.name || "User"}
+          width={50}
+          height={50}
+          className="rounded-full object-cover"
         />
-        <h2 className="font-medium">{conversation.otherUser?.name}</h2>
+        <h2 className="font-medium text-lg">{activeUser.name}</h2>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-2 bg-gray-50">
-        {messages.map((msg) => (
-          <div
-            key={msg._id}
-            className={`flex ${
-              msg.sender._id === currentUser ? "justify-end" : "justify-start"
-            }`}
-          >
+      <div className="flex-1 p-4 overflow-y-auto space-y-2 bg-gray-50 mt-2">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 mt-10">
+            <p className="mb-2 text-lg">Start a new conversation</p>
+            <p className="text-sm">
+              Send your first message to {activeUser.name}
+            </p>
+          </div>
+        ) : (
+          messages.map((msg) => (
             <div
-              className={`px-3 py-2 rounded-lg max-w-xs break-words ${
-                msg.sender._id === currentUser
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-800"
+              key={msg._id}
+              className={`flex ${
+                msg.sender._id === currentUser ? "justify-end" : "justify-start"
               }`}
             >
-              {msg.text && <div>{msg.text}</div>}
-              {msg.attachments?.map((att, i) => (
-                <img
-                  key={i}
-                  src={`http://localhost:3000${att}`}
-                  alt="attachment"
-                  className="mt-2 max-w-full rounded"
-                />
-              ))}
+              <div
+                className={`px-3 py-2 rounded-lg max-w-xs break-words ${
+                  msg.sender._id === currentUser
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+              >
+                {msg.text && <div>{msg.text}</div>}
+                {msg.attachments?.map((att, i) => (
+                  <img
+                    key={i}
+                    src={`http://localhost:3000${att}`}
+                    alt="attachment"
+                    className="mt-2 max-w-full rounded"
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
       <div className="p-3 border-t flex items-center gap-2 bg-gray-100">
         <input
           type="text"
@@ -180,7 +193,7 @@ export default function ChatWindow({ conversation, currentUser }) {
 
         <button
           onClick={handleSend}
-          className="px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
+          className="px-8 py-2 bg-gray-800 text-white rounded-l hover:bg-blue-800 transition"
         >
           Send
         </button>

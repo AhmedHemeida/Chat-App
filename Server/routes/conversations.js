@@ -8,7 +8,6 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// Create or get one-to-one conversation (participants: logged-in user and otherUserId)
 router.post('/conversations', auth, async (req, res) => {
   try {
     const userId = req.user._id;
@@ -33,11 +32,9 @@ router.post('/conversations', auth, async (req, res) => {
   }
 });
 
-// Inbox: list conversations for current user with last message preview and timestamp
 router.get('/inbox', auth, async (req, res) => {
   try {
     const userId = req.user._id;
-    // find conversations where user participates
     const convs = await Conversation.find({ participants: userId })
       .sort({ updatedAt: -1 })
       .populate('participants', 'name email avatarUrl')
@@ -46,9 +43,7 @@ router.get('/inbox', auth, async (req, res) => {
         populate: { path: 'sender', select: 'name _id' }
       });
 
-    // Map to simple inbox items
     const inbox = convs.map(c => {
-      // find the other participant
       const other = c.participants.find(p => !p._id.equals(userId));
       return {
         conversationId: c._id,
@@ -72,7 +67,6 @@ router.get('/inbox', auth, async (req, res) => {
   }
 });
 
-// Get conversation messages (paginated)
 router.get('/:convId/messages', auth, async (req, res) => {
   try {
     const { convId } = req.params;
@@ -85,12 +79,35 @@ router.get('/:convId/messages', auth, async (req, res) => {
       .limit(parseInt(limit))
       .populate('sender', 'name email avatarUrl');
 
-    // return in chronological order
     res.json(messages.reverse());
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+
+router.get('/users', auth, async (req, res) => {
+  try {
+
+        const conversations = await Conversation.find({
+      participants: req.user.id,
+    });
+
+    const excludedUserIds = conversations.flatMap(conv =>
+      conv.participants.filter(p => p.toString() !== req.user.id.toString())
+    );
+
+    const users = await User.find({
+      _id: { $ne: req.user.id, $nin: excludedUserIds },
+    });
+    
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 module.exports = router;
